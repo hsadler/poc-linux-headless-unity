@@ -5,12 +5,12 @@ services:
     build:
       context: .
       dockerfile: 'Dockerfile.dev'
-    image: poc-linuc-headless-unity:dev
-    container_name: poc-linuc-headless-unity
+    image: poc-linux-headless-unity:dev
+    container_name: poc-linux-headless-unity
     restart: always
     ports:
       - "5000:5000"
     volumes:
       - ./:/go/src
-    command: 'CompileDaemon --build="go build -o ./build/server"
-      --command=./build/server'
+    command: 'CompileDaemon --build="go build -o ./server-build/server"
+      --command=./server-build/server'
