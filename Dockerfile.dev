@@ -1,7 +1,10 @@
 FROM golang:1.17.3-buster
 
 # copy over server files
-COPY . /go/src/
+COPY ./GameServer/ /go/src/
+
+# copy over unity client files
+COPY ./GameClient/Builds/ /GameClient/
 
 # set working directory
 WORKDIR /go/src/

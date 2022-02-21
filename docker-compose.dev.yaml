@@ -11,6 +11,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./:/go/src
+      - ./GameServer/:/go/src
     command: 'CompileDaemon --build="go build -o ./server-build/server"
       --command=./server-build/server'
+             
