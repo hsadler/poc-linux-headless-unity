@@ -2,17 +2,25 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"html"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/gorilla/websocket"
 )
 
 func main() {
 	log.SetFlags(log.LstdFlags)
+	// handle client connections
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+		// upgrade request to websocket and use default options
+		upgrader := websocket.Upgrader{}
+		ws, err := upgrader.Upgrade(w, r, nil)
+		ws.WriteMessage(1, []byte("connection established"))
+		if err != nil {
+			log.Print("Request upgrade error:", err)
+			return
+		}
 	})
 	// run the server
 	port := os.Getenv("PORT")
