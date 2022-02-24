@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -11,6 +12,10 @@ import (
 
 func main() {
 	log.SetFlags(log.LstdFlags)
+	// endpoint for testing
+	http.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprintf(w, "hi!")
+	})
 	// handle client connections
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// upgrade request to websocket and use default options
