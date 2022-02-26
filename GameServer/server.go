@@ -21,7 +21,7 @@ func main() {
 		// upgrade request to websocket and use default options
 		upgrader := websocket.Upgrader{}
 		ws, err := upgrader.Upgrade(w, r, nil)
-		ws.WriteMessage(1, []byte("connection established"))
+		ws.WriteMessage(1, []byte("{\"message\":\"connection established\"}"))
 		if err != nil {
 			log.Print("Request upgrade error:", err)
 			return

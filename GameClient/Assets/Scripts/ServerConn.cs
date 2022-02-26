@@ -5,11 +5,10 @@ using WebSocketSharp;
 public class ServerConn
 {
 
-
     private WebSocket ws;
 
-    public delegate void GameStateHandlerDelegate(string gameStateJson);
-    private GameStateHandlerDelegate gameStateHandlerDelegate;
+    public delegate void ServerMessageHandlerDelegate(string serverMessageJson);
+    private ServerMessageHandlerDelegate serverMessageHandlerDelegate;
 
 
     public ServerConn(string gameServerUrl) {
@@ -18,12 +17,12 @@ public class ServerConn
 
     // INTERFACE METHODS
 
-    public void SynchToServer(string gameStateJson) {
-        this.SendWebsocketClientMessage(gameStateJson);
+    public void SendClientMessageToServer(string clientMessageJson) {
+        this.ws.Send(clientMessageJson);
     }
 
-    public void RegisterSyncFromServerHandler(GameStateHandlerDelegate d) {
-        this.gameStateHandlerDelegate = d;
+    public void RegisterServerMessageHandler(ServerMessageHandlerDelegate d) {
+        this.serverMessageHandlerDelegate = d;
     }
 
     // WEBSOCKET HELPERS
@@ -39,13 +38,7 @@ public class ServerConn
 
     private void ProcessServerMessage(object sender, MessageEventArgs e)
     {
-        this.gameStateHandlerDelegate(e.Data);
+        this.serverMessageHandlerDelegate(e.Data);
     }
-
-    private void SendWebsocketClientMessage(string messageJson)
-    {
-        this.ws.Send(messageJson);
-    }
-
     
 }

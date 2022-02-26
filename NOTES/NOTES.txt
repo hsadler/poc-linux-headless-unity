@@ -2,7 +2,7 @@
 TODOs:
     X poc running headless game on server
     X confirm headless game is running physics simulations
-    - poc headless game communication with Golang game server
+    X poc headless game communication with Golang game server
     - poc local game recieving headless game updates
     - poc headless game acting as central game authority
 
