@@ -5,20 +5,22 @@ using UnityEngine;
 public class GameManagerScript : MonoBehaviour
 {
 
-    private ServerConn serverConn;
-    private const string GAME_SERVER_URL = "ws://localhost:5000";
+    public ServerConn serverConn;
+
+    private GameObject gameBall;
+
 
     // UNITY HOOKS
 
     void Awake()
     {
-        this.serverConn = new ServerConn(GAME_SERVER_URL);
+        this.serverConn = new ServerConn(Constants.GAME_SERVER_URL);
         this.serverConn.RegisterServerMessageHandler(this.ServerMessageHandler);
     }
 
     void Start()
     {
-        
+        this.gameBall = GameObject.FindGameObjectWithTag("Ball");
     }
 
     void Update()
@@ -30,9 +32,9 @@ public class GameManagerScript : MonoBehaviour
 
     // IMPLEMENTATION METHODS
 
-    private void ServerMessageHandler(string serverMessageJson)
+    private void ServerMessageHandler(string serverMessage)
     {
-        Debug.Log("Server message received: " + serverMessageJson);
+        Debug.Log("Server message received: " + serverMessage);
     }
 
 }

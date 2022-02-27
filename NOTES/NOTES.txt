@@ -1,10 +1,11 @@
 
 TODOs:
-    X poc running headless game on server
-    X confirm headless game is running physics simulations
-    X poc headless game communication with Golang game server
-    - poc local game recieving headless game updates
-    - poc headless game acting as central game authority
+    X poc running central game-client on server
+    X confirm central game-client is running physics simulations
+    X poc central game-client communication with Golang game server
+    - local game receiving central game-client updates
+    - central game-client running in a different mode compared to local 
+        game-clients
 
-run headless client:
+run central game-client:
 ./headless.x86_64 -batchmode -nographics -logFile

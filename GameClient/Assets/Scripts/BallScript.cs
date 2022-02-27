@@ -5,27 +5,20 @@ using UnityEngine;
 public class BallScript : MonoBehaviour
 {
 
-    private float maxHeight = 0;
+    [SerializeField]
+    private GameManagerScript gms;
 
-    // Start is called before the first frame update
     void Start()
     {
-        
+       
     }
 
-    // Update is called once per frame
     void Update()
     {
-        float newHeight = this.transform.position.y;
-        if(newHeight > this.maxHeight)
+        if (Constants.IS_CENTRAL_CLIENT)
         {
-            this.maxHeight = newHeight;
-        }
+            this.gms.serverConn.SendClientMessageToServer(this.transform.position.ToString());   
+        }   
     }
 
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        Debug.Log("Ball collided with floor. Max height was: " + this.maxHeight.ToString());
-        this.maxHeight = 0;
-    }
 }

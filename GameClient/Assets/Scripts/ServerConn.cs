@@ -7,7 +7,7 @@ public class ServerConn
 
     private WebSocket ws;
 
-    public delegate void ServerMessageHandlerDelegate(string serverMessageJson);
+    public delegate void ServerMessageHandlerDelegate(string serverMessage);
     private ServerMessageHandlerDelegate serverMessageHandlerDelegate;
 
 
@@ -17,8 +17,8 @@ public class ServerConn
 
     // INTERFACE METHODS
 
-    public void SendClientMessageToServer(string clientMessageJson) {
-        this.ws.Send(clientMessageJson);
+    public void SendClientMessageToServer(string clientMessage) {
+        this.ws.Send(clientMessage);
     }
 
     public void RegisterServerMessageHandler(ServerMessageHandlerDelegate d) {
