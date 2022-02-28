@@ -74,6 +74,7 @@ func (cl *Client) RecieveMessages() {
 			break
 		}
 		fmt.Println("client message received: " + string(message))
+		cl.Hub.Broadcast <- message
 
 		// // log message received
 		// fmt.Println("client message received:")

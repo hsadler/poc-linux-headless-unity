@@ -3,9 +3,11 @@ TODOs:
     X poc running central game-client on server
     X confirm central game-client is running physics simulations
     X poc central game-client communication with Golang game server
-    - local game receiving central game-client updates
-    - central game-client running in a different mode compared to local 
-        game-clients
+    X local game receiving central game-client updates
+    - run central client mode with env var
+    - split golang gameserver image from central client
+    - player client's ball's position should be updated by the server message
+    - 
 
 run central game-client:
 ./headless.x86_64 -batchmode -nographics -logFile
