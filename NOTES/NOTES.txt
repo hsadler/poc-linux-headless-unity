@@ -5,7 +5,11 @@ TODOs:
     X poc central game-client communication with Golang game server
     X local game receiving central game-client updates
     X run central client mode with env var
-    - player client's ball's position should be updated by the server message
+    X player client's ball's position should be updated by the server message
+    - connect with multiple player clients to see bouncing ball
+    - create player
+    - stream player positions to central client
+    - detect player->ball collisions on central client
     - (maybe) split golang gameserver image from central client image
 
 
