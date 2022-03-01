@@ -73,7 +73,7 @@ func (cl *Client) RecieveMessages() {
 			log.Println("read:", err)
 			break
 		}
-		fmt.Println("client message received: " + string(message))
+		// fmt.Println("client message received: " + string(message))
 		cl.Hub.Broadcast <- message
 
 		// // log message received
@@ -186,7 +186,7 @@ func NewPlayerFromMap(pData map[string]interface{}, ws *websocket.Conn) *Player 
 func SendJsonMessage(ws *websocket.Conn, messageJson []byte) {
 	ws.WriteMessage(1, messageJson)
 	// log that message was sent
-	fmt.Println("server message sent:")
+	// fmt.Println("server message sent:")
 	ConsoleLogJsonByteArray(messageJson)
 }
 

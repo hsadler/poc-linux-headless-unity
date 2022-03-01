@@ -15,10 +15,10 @@ public class BallScript : MonoBehaviour
 
     void Update()
     {
-        if (Constants.IS_CENTRAL_CLIENT)
+        if (gms.isCentralClient)
         {
-            this.gms.serverConn.SendClientMessageToServer(this.transform.position.ToString());   
-        }   
+            this.gms.serverConn.SendClientMessageToServer(this.transform.position.ToString());
+        }
     }
 
 }

@@ -1,12 +1,12 @@
 FROM golang:1.17.3-buster
 
-# copy over server files
+# game server
 COPY ./GameServer/ /go/src/
 
-# copy over unity client files
+# central game client
 COPY ./GameClient/Builds/CentralClient/ /GameClient/
+ENV CENTRAL_GAME_CLIENT=1
 
-# set working directory
 WORKDIR /go/src/
 
 # for hot reload
