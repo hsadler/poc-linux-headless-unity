@@ -6,7 +6,7 @@ TODOs:
     X local game receiving central game-client updates
     X run central client mode with env var
     X player client's ball's position should be updated by the server message
-    - connect with multiple player clients to see bouncing ball
+    X connect with multiple player clients to see bouncing ball
     - create player
     - stream player positions to central client
     - detect player->ball collisions on central client

@@ -22,6 +22,10 @@ public class GameManagerScript : MonoBehaviour
     void Awake()
     {
         this.isCentralClient = Environment.GetEnvironmentVariable("CENTRAL_GAME_CLIENT") == "1";
+        if (this.isCentralClient)
+        {
+            Application.targetFrameRate = (int)(1F / Time.fixedDeltaTime);
+        }
         this.serverConn = new ServerConn(Constants.GAME_SERVER_URL);
         this.serverConn.RegisterServerMessageHandler(this.ServerMessageHandler);
     }
