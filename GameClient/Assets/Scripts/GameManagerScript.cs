@@ -16,12 +16,16 @@ public class GameManagerScript : MonoBehaviour
     private Vector3 newGameBallPosition = Vector3.zero;
     private Vector3 gameBallVelocity = Vector3.zero;
 
+    private GameObject mainPlayer;
+    //private Vector3 newP
+
 
     // UNITY HOOKS
 
     void Awake()
     {
         this.isCentralClient = Environment.GetEnvironmentVariable("CENTRAL_GAME_CLIENT") == "1";
+        //this.isCentralClient = true;
         if (this.isCentralClient)
         {
             Application.targetFrameRate = (int)(1F / Time.fixedDeltaTime);
@@ -45,29 +49,10 @@ public class GameManagerScript : MonoBehaviour
         {
             this.serverConn.SendClientMessageToServer(this.gameBall.transform.position.ToString());
         }
-        else if (this.gameBall.transform.position != this.newGameBallPosition)
+        else
         {
-            // smooth movement of central game-client controlled ball position
-            var d = Vector3.Distance(this.gameBall.transform.position, this.newGameBallPosition);
-            if (d < 1f)
-            {
-                this.gameBall.transform.position = Vector3.SmoothDamp(
-                    this.gameBall.transform.position,
-                    this.newGameBallPosition,
-                    ref this.gameBallVelocity,
-                    0.01F
-                );
-                // alt smoothing method (seems choppier)
-                //this.gameBall.transform.position = Vector3.MoveTowards(
-                //    this.gameBall.transform.position,
-                //    this.newGameBallPosition,
-                //    100 * Time.deltaTime
-                //);
-            }
-            else
-            {
-                this.gameBall.transform.position = this.newGameBallPosition;
-            }
+            // interpolate all entity positions displays from server
+            this.gameBall.GetComponent<EntityInterpolation>().InterpolatePosition(this.newGameBallPosition);
         }
         
     }
