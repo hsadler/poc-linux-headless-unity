@@ -24,4 +24,9 @@ public static class Functions
         return result;
     }
 
+    public static string GenUUID()
+    {
+        return System.Guid.NewGuid().ToString();
+    }
+
 }

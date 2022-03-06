@@ -11,7 +11,11 @@ public class ServerConn
     private ServerMessageHandlerDelegate serverMessageHandlerDelegate;
 
 
-    public ServerConn(string gameServerUrl) {
+    public ServerConn(string gameServerUrl, bool isCentralClient) {
+        if (isCentralClient)
+        {
+            gameServerUrl += "?isCentralClient=1";
+        }
         this.InitWebSocketClient(gameServerUrl);
     }
 

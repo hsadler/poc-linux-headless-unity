@@ -1,48 +1,79 @@
 using System;
 
-// EXAMPLES
+// base client message
+[Serializable]
+public class BaseClientMessage
+{
+    public string clientId;
+    public string messageType;
+}
 
-//[Serializable]
-//public class ClientMessagePlayerEnter
-//{
+[Serializable]
+public class ClientMessageCentralClientConnect : BaseClientMessage
+{
 
-//    public string messageType = Constants.CLIENT_MESSAGE_TYPE_PLAYER_ENTER;
-//    public Player player;
+    public ClientMessageCentralClientConnect(string clientId)
+    {
+        this.clientId = clientId;
+        this.messageType = Constants.MESSAGE_TYPE_CENTRAL_CLIENT_CONNECT;
+    }
 
-//    public ClientMessagePlayerEnter(Player playerModel)
-//    {
-//        this.player = playerModel;
-//    }
+}
 
-//}
+[Serializable]
+public class ClientMessagePlayerClientConnect : BaseClientMessage
+{
 
-//[Serializable]
-//public class ClientMessagePlayerExit
-//{
+    public ClientMessagePlayerClientConnect(string clientId)
+    {
+        this.clientId = clientId;
+        this.messageType = Constants.MESSAGE_TYPE_PLAYER_CLIENT_CONNECT;
+    }
 
-//    public string messageType = Constants.CLIENT_MESSAGE_TYPE_PLAYER_EXIT;
-//    public string playerId;
+}
 
-//    public ClientMessagePlayerExit(string playerId)
-//    {
-//        this.playerId = playerId;
-//    }
+[Serializable]
+public class ClientMessagePlayerCreate : BaseClientMessage
+{
 
-//}
+    public PlayerEntity player;
 
-//[Serializable]
-//public class ClientMessagePlayerPosition
-//{
+    public ClientMessagePlayerCreate(string clientId, PlayerEntity player)
+    {
+        this.clientId = clientId;
+        this.messageType = Constants.MESSAGE_TYPE_PLAYER_CREATE;
+        this.player = player;
+    }
 
-//    public string messageType = Constants.CLIENT_MESSAGE_TYPE_PLAYER_POSITION;
-//    public string playerId;
-//    public Position position;
+}
 
-//    public ClientMessagePlayerPosition(string playerId, Position position)
-//    {
-//        this.playerId = playerId;
-//        this.position = position;
-//    }
+[Serializable]
+public class ClientMessagePlayerDestroy : BaseClientMessage
+{
 
-//}
+    public string goUUID;
 
+    public ClientMessagePlayerDestroy(string clientId, string goUUID)
+    {
+        this.clientId = clientId;
+        this.messageType = Constants.MESSAGE_TYPE_PLAYER_DESTROY;
+        this.goUUID = goUUID;
+    }
+
+}
+
+[Serializable]
+public class ClientMessagePlayerState : BaseClientMessage
+{
+
+    public string playerId;
+    public PlayerEntity player;
+
+    public ClientMessagePlayerState(string clientId, PlayerEntity playerModel)
+    {
+        this.clientId = clientId;
+        this.messageType = Constants.MESSAGE_TYPE_PLAYER_STATE;
+        this.player = playerModel;
+    }
+
+}

@@ -15,24 +15,34 @@ import (
 ///////////////// HUB /////////////////
 
 type Hub struct {
-	Clients   map[*Client]bool
-	Add       chan *Client
-	Remove    chan *Client
-	Broadcast chan []byte
+	CentralClient         *Client
+	PlayerClients         map[*Client]bool
+	AddCentralClient      chan *Client
+	AddPlayerClient       chan *Client
+	RemoveClient          chan *Client
+	PlayerClientBroadcast chan []byte
 }
 
 func (h *Hub) Run() {
 	for {
 		select {
-		case client := <-h.Add:
-			fmt.Println("adding client from hub")
-			h.Clients[client] = true
-		case client := <-h.Remove:
-			fmt.Println("removing client from hub")
-			delete(h.Clients, client)
+		case client := <-h.AddCentralClient:
+			fmt.Println("adding central client to hub")
+			h.CentralClient = client
+		case client := <-h.AddPlayerClient:
+			fmt.Println("adding player client to hub")
+			h.PlayerClients[client] = true
+		case client := <-h.RemoveClient:
+			if client == h.CentralClient {
+				fmt.Println("removing central client from hub")
+				h.CentralClient = nil
+			} else {
+				fmt.Println("removing player client from hub")
+				delete(h.PlayerClients, client)
+			}
 			client.Cleanup()
-		case message := <-h.Broadcast:
-			for c := range h.Clients {
+		case message := <-h.PlayerClientBroadcast:
+			for c := range h.PlayerClients {
 				c.Send <- message
 			}
 		}
@@ -41,20 +51,22 @@ func (h *Hub) Run() {
 
 func NewHub() *Hub {
 	return &Hub{
-		Clients:   make(map[*Client]bool),
-		Add:       make(chan *Client),
-		Remove:    make(chan *Client),
-		Broadcast: make(chan []byte),
+		CentralClient:         nil,
+		PlayerClients:         make(map[*Client]bool),
+		AddCentralClient:      make(chan *Client),
+		AddPlayerClient:       make(chan *Client),
+		RemoveClient:          make(chan *Client),
+		PlayerClientBroadcast: make(chan []byte),
 	}
 }
 
 ///////////////// CLIENT /////////////////
 
 type Client struct {
-	Hub    *Hub
-	Ws     *websocket.Conn
-	Player *Player
-	Send   chan []byte
+	Hub      *Hub
+	Ws       *websocket.Conn
+	ClientId string
+	Send     chan []byte
 }
 
 func (cl *Client) RecieveMessages() {
@@ -63,7 +75,7 @@ func (cl *Client) RecieveMessages() {
 	// do player removal from game state and websocket close on disconnect
 	defer func() {
 		fmt.Println("Client.RecieveMessages() goroutine stopping")
-		cl.HandlePlayerExit(nil)
+		cl.HandleClientDisconnect(nil)
 		cl.Ws.Close()
 	}()
 	for {
@@ -73,74 +85,24 @@ func (cl *Client) RecieveMessages() {
 			log.Println("read:", err)
 			break
 		}
-		// fmt.Println("client message received: " + string(message))
-		cl.Hub.Broadcast <- message
-
-		// // log message received
-		// fmt.Println("client message received:")
-		// ConsoleLogJsonByteArray(message)
-		// // route message to handler
-		// messageTypeToHandler := map[string]func(map[string]interface{}){
-		// 	"CLIENT_MESSAGE_TYPE_PLAYER_ENTER":  cl.HandlePlayerEnter,
-		// 	"CLIENT_MESSAGE_TYPE_PLAYER_UPDATE": cl.HandlePlayerUpdate,
-		// 	"CLIENT_MESSAGE_TYPE_PLAYER_EXIT":   cl.HandlePlayerExit,
-		// }
-		// var mData map[string]interface{}
-		// if err := json.Unmarshal(message, &mData); err != nil {
-		// 	panic(err)
-		// }
-		// // process message with handler
-		// messageTypeToHandler[mData["messageType"].(string)](mData)
-	}
-}
-
-func (cl *Client) SendGameState() {
-	allPlayers := make([]*Player, 0)
-	for client := range cl.Hub.Clients {
-		if client.Player != nil {
-			allPlayers = append(allPlayers, client.Player)
+		// log message received
+		fmt.Println("client message received:")
+		ConsoleLogJsonByteArray(message)
+		// route message to handler
+		messageTypeToHandler := map[string]func([]byte){
+			// "CLIENT_MESSAGE_TYPE_PLAYER_ENTER":  cl.HandlePlayerEnter,
+			// "CLIENT_MESSAGE_TYPE_PLAYER_UPDATE": cl.HandlePlayerUpdate,
+			// "CLIENT_MESSAGE_TYPE_PLAYER_EXIT":   cl.HandlePlayerExit,
+			// "MESSAGE_TYPE_PLAYER_CLIENT_CONNECT":    cl.HandlePlayerClientConnect,
+			// "MESSAGE_TYPE_PLAYER_CLIENT_DISCONNECT": cl.HandlePlayerClientDisconnect,
 		}
+		var mData map[string]interface{}
+		if err := json.Unmarshal(message, &mData); err != nil {
+			panic(err)
+		}
+		// process message with handler
+		messageTypeToHandler[mData["messageType"].(string)](message)
 	}
-	messageData := GameStateMessage{
-		MessageType: "SERVER_MESSAGE_TYPE_GAME_STATE",
-		GameState: &GameStateJsonSerializable{
-			Players: allPlayers,
-		},
-	}
-	serialized, _ := json.Marshal(messageData)
-	cl.Send <- serialized
-}
-
-func (cl *Client) HandlePlayerEnter(mData map[string]interface{}) {
-	player := NewPlayerFromMap(mData["player"].(map[string]interface{}), cl.Ws)
-	cl.Player = player
-	message := PlayerMessage{
-		MessageType: "SERVER_MESSAGE_TYPE_PLAYER_ENTER",
-		Player:      player,
-	}
-	serialized, _ := json.Marshal(message)
-	cl.Hub.Broadcast <- serialized
-}
-
-func (cl *Client) HandlePlayerUpdate(mData map[string]interface{}) {
-	player := NewPlayerFromMap(mData["player"].(map[string]interface{}), cl.Ws)
-	cl.Player = player
-	message := PlayerMessage{
-		MessageType: "SERVER_MESSAGE_TYPE_PLAYER_UPDATE",
-		Player:      player,
-	}
-	serialized, _ := json.Marshal(message)
-	cl.Hub.Broadcast <- serialized
-}
-
-func (cl *Client) HandlePlayerExit(mData map[string]interface{}) {
-	message := PlayerMessage{
-		MessageType: "SERVER_MESSAGE_TYPE_PLAYER_EXIT",
-		Player:      cl.Player,
-	}
-	serialized, _ := json.Marshal(message)
-	cl.Hub.Broadcast <- serialized
-	cl.Hub.Remove <- cl
 }
 
 func (cl *Client) SendMessages() {
@@ -152,20 +114,94 @@ func (cl *Client) SendMessages() {
 	}
 }
 
+func (cl *Client) HandleClientDisconnect(m []byte) {
+	cl.Hub.RemoveClient <- cl
+}
+
+// EXAMPLES OF PRIOR HANDLERS
+
+// func (cl *Client) HandlePlayerEnter(mData map[string]interface{}) {
+// 	player := NewPlayerFromMap(mData["player"].(map[string]interface{}), cl.Ws)
+// 	cl.Player = player
+// 	message := PlayerMessage{
+// 		MessageType: "SERVER_MESSAGE_TYPE_PLAYER_ENTER",
+// 		Player:      player,
+// 	}
+// 	serialized, _ := json.Marshal(message)
+// 	cl.Hub.Broadcast <- serialized
+// }
+
+// func (cl *Client) HandlePlayerUpdate(mData map[string]interface{}) {
+// 	player := NewPlayerFromMap(mData["player"].(map[string]interface{}), cl.Ws)
+// 	cl.Player = player
+// 	message := PlayerMessage{
+// 		MessageType: "SERVER_MESSAGE_TYPE_PLAYER_UPDATE",
+// 		Player:      player,
+// 	}
+// 	serialized, _ := json.Marshal(message)
+// 	cl.Hub.Broadcast <- serialized
+// }
+
+// func (cl *Client) HandlePlayerExit(mData map[string]interface{}) {
+// 	message := PlayerMessage{
+// 		MessageType: "SERVER_MESSAGE_TYPE_PLAYER_EXIT",
+// 		Player:      cl.Player,
+// 	}
+// 	serialized, _ := json.Marshal(message)
+// 	cl.Hub.Broadcast <- serialized
+// 	cl.Hub.Remove <- cl
+// }
+
+func (cl *Client) SendGameState() {
+	allPlayers := make([]*Player, 0)
+	// TODO: refactor for new player registry structure when it's ready
+	// for client := range cl.Hub.PlayerClients {
+	// 	if client.Player != nil {
+	// 		allPlayers = append(allPlayers, client.Player)
+	// 	}
+	// }
+	messageData := GameStateMessage{
+		MessageType: "SERVER_MESSAGE_TYPE_GAME_STATE",
+		GameState: &GameStateJsonSerializable{
+			Players: allPlayers,
+		},
+	}
+	serialized, _ := json.Marshal(messageData)
+	cl.Send <- serialized
+}
+
 func (cl *Client) Cleanup() {
 	close(cl.Send)
 }
 
-///////////////// PLAYER /////////////////
-
-type Player struct {
-	Id       string    `json:"id"`
-	Position *Position `json:"position"`
-}
+///////////////// GAME ENTITIES /////////////////
 
 type Position struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
+}
+
+type GameBall struct {
+	Id       string    `json:"id"`
+	Position *Position `json:"position"`
+}
+
+func NewGameBallFromMap(pData map[string]interface{}, ws *websocket.Conn) *Player {
+	posMap := pData["position"].(map[string]interface{})
+	pos := Position{
+		X: posMap["x"].(float64),
+		Y: posMap["y"].(float64),
+	}
+	player := Player{
+		Id:       pData["id"].(string),
+		Position: &pos,
+	}
+	return &player
+}
+
+type Player struct {
+	Id       string    `json:"id"`
+	Position *Position `json:"position"`
 }
 
 func NewPlayerFromMap(pData map[string]interface{}, ws *websocket.Conn) *Player {
@@ -213,7 +249,9 @@ func main() {
 	h := NewHub()
 	go h.Run()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		upgrader := websocket.Upgrader{} // use default options
+		_, isCentralClient := r.URL.Query()["isCentralClient"]
+		// use default options
+		upgrader := websocket.Upgrader{}
 		ws, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Print("upgrade:", err)
@@ -221,14 +259,17 @@ func main() {
 		}
 		// create client, run processes, and add to hub
 		cl := &Client{
-			Hub:    h,
-			Ws:     ws,
-			Player: nil,
-			Send:   make(chan []byte, 256),
+			Hub:  h,
+			Ws:   ws,
+			Send: make(chan []byte, 256),
 		}
 		go cl.RecieveMessages()
 		go cl.SendMessages()
-		h.Add <- cl
+		if isCentralClient {
+			h.AddCentralClient <- cl
+		} else {
+			h.AddPlayerClient <- cl
+		}
 	})
 	addr := flag.String("addr", "0.0.0.0:5000", "http service address")
 	err := http.ListenAndServe(*addr, nil)
@@ -241,6 +282,7 @@ func main() {
 
 func ConsoleLogJsonByteArray(message []byte) {
 	var out bytes.Buffer
+	message = append(message, "\n"...)
 	json.Indent(&out, message, "", "  ")
 	out.WriteTo(os.Stdout)
 }
