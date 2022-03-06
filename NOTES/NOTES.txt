@@ -8,10 +8,7 @@ TODOs:
     X player client's ball's position should be updated by the server message
     X connect with multiple player clients to see bouncing ball
     - create player
-    - stream player positions to central client
-    - detect player->ball collisions on central client
-    - (maybe) split golang gameserver image from central client image
-
-
-run central game-client:
-./headless.x86_64 -batchmode -nographics -logFile
+    - player enter/exit capability
+    - stream player controls to central client
+    - simulate environment physics central client
+    - stream entity positions from central client to all player clients
