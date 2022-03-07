@@ -7,8 +7,12 @@ TODOs:
     X run central client mode with env var
     X player client's ball's position should be updated by the server message
     X connect with multiple player clients to see bouncing ball
-    - create player
-    - player enter/exit capability
-    - stream player controls to central client
-    - simulate environment physics central client
-    - stream entity positions from central client to all player clients
+    - client->server connect/disconnect
+    - central-client game ball creation upon server connect
+    - send entire game state from central-client
+    - client message routing
+    - add server message routing
+    - replicate game state out to connected player-clients
+    - send player input from player-client -> central-client
+    - translate player input to player object affect on central-client
+    - verify game working as expected
