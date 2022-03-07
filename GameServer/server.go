@@ -94,7 +94,7 @@ func (cl *Client) RecieveMessages() {
 			// "CLIENT_MESSAGE_TYPE_PLAYER_UPDATE": cl.HandlePlayerUpdate,
 			// "CLIENT_MESSAGE_TYPE_PLAYER_EXIT":   cl.HandlePlayerExit,
 			// "MESSAGE_TYPE_PLAYER_CLIENT_CONNECT":    cl.HandlePlayerClientConnect,
-			// "MESSAGE_TYPE_PLAYER_CLIENT_DISCONNECT": cl.HandlePlayerClientDisconnect,
+			"MESSAGE_TYPE_CLIENT_DISCONNECT": cl.HandleClientDisconnect,
 		}
 		var mData map[string]interface{}
 		if err := json.Unmarshal(message, &mData); err != nil {

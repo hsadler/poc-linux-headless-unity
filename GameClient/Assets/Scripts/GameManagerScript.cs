@@ -90,21 +90,21 @@ public class GameManagerScript : MonoBehaviour
         // route message to handler based on message type
         switch (messageType)
         {
-            case Constants.MESSAGE_TYPE_PLAYER_CLIENT_CONNECT:
-                this.HandlePlayerClientConnectServerMessage(serverMessage);
-                break;
+            //case Constants.MESSAGE_TYPE_PLAYER_CLIENT_CONNECT:
+            //    this.HandlePlayerClientConnectServerMessage(serverMessage);
+            //    break;
             case Constants.MESSAGE_TYPE_PLAYER_INPUT:
                 this.HandlePlayerInputServerMessage(serverMessage);
                 break;
-            case Constants.MESSAGE_TYPE_PLAYER_CREATE:
-                this.HandlePlayerCreateServerMessage(serverMessage);
-                break;
-            case Constants.MESSAGE_TYPE_PLAYER_DESTROY:
-                this.HandlePlayerDestroyServerMessage(serverMessage);
-                break;
-            case Constants.MESSAGE_TYPE_PLAYER_STATE:
-                this.HandlePlayerStateServerMessage(serverMessage);
-                break;
+            //case Constants.MESSAGE_TYPE_PLAYER_CREATE:
+            //    this.HandlePlayerCreateServerMessage(serverMessage);
+            //    break;
+            //case Constants.MESSAGE_TYPE_PLAYER_DESTROY:
+            //    this.HandlePlayerDestroyServerMessage(serverMessage);
+            //    break;
+            //case Constants.MESSAGE_TYPE_PLAYER_STATE:
+            //    this.HandlePlayerStateServerMessage(serverMessage);
+            //    break;
             default:
                 Debug.LogWarning("Server message not processed: " + serverMessage);
                 break;
