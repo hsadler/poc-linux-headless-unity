@@ -29,8 +29,8 @@ public class GameManagerScript : MonoBehaviour
     void Awake()
     {
         this.clientId = Functions.GenUUID();
-        //this.isCentralClient = Environment.GetEnvironmentVariable("CENTRAL_GAME_CLIENT") == "1";
-        this.isCentralClient = true;
+        this.isCentralClient = Environment.GetEnvironmentVariable("CENTRAL_GAME_CLIENT") == "1";
+        //this.isCentralClient = true;
         if (this.isCentralClient)
         {
             Application.targetFrameRate = (int)(1F / Time.fixedDeltaTime);
@@ -116,21 +116,12 @@ public class GameManagerScript : MonoBehaviour
         // route message to handler based on message type
         switch (messageType)
         {
-            //case Constants.MESSAGE_TYPE_PLAYER_CLIENT_CONNECT:
-            //    this.HandlePlayerClientConnectServerMessage(serverMessage);
+            //case Constants.MESSAGE_TYPE_PLAYER_INPUT:
+            //    this.HandlePlayerInputServerMessage(serverMessage);
             //    break;
-            case Constants.MESSAGE_TYPE_PLAYER_INPUT:
-                this.HandlePlayerInputServerMessage(serverMessage);
+            case Constants.MESSAGE_TYPE_GAME_STATE:
+                this.HandleGameStateMessage(serverMessage);
                 break;
-            //case Constants.MESSAGE_TYPE_PLAYER_CREATE:
-            //    this.HandlePlayerCreateServerMessage(serverMessage);
-            //    break;
-            //case Constants.MESSAGE_TYPE_PLAYER_DESTROY:
-            //    this.HandlePlayerDestroyServerMessage(serverMessage);
-            //    break;
-            //case Constants.MESSAGE_TYPE_PLAYER_STATE:
-            //    this.HandlePlayerStateServerMessage(serverMessage);
-            //    break;
             default:
                 Debug.LogWarning("Server message not processed: " + serverMessage);
                 break;
@@ -153,25 +144,23 @@ public class GameManagerScript : MonoBehaviour
         //this.serverConn.SendClientMessageToServer(m);
     }
 
-    private void HandlePlayerCreateServerMessage(string serverMessage)
+    private void HandleGameStateMessage(string serverMessage)
     {
-        // STUB
-        Debug.Log("receiving 'player create' message: " + serverMessage);
-    }
-
-    private void HandlePlayerDestroyServerMessage(string serverMessage)
-    {
-        // STUB
-    }
-
-    private void HandlePlayerStateServerMessage(string serverMessage)
-    {
-        // STUB
-    }
-
-    private void HandlePlayerInputServerMessage(string serverMessage)
-    {
-        // STUB
+        var gameStateMessage = JsonUtility.FromJson<GameStateMessage>(serverMessage);
+        foreach(var gameBall in gameStateMessage.gameState.gameBalls)
+        {
+            var pos = new Vector3(gameBall.position.x, gameBall.position.y, 0);
+            if(this.idToGameBallGO.ContainsKey(gameBall.uuid))
+            {
+                var gameBallGO = this.idToGameBallGO[gameBall.uuid];
+                gameBallGO.GetComponent<EntityInterpolation>().InterpolateToPosition(pos);
+            }
+            else
+            {
+                var gameBallGO = GameObject.Instantiate(this.gameBallPrefab, pos, Quaternion.identity);
+                this.idToGameBallGO.Add(gameBall.uuid, gameBallGO);
+            }
+        }
     }
 
 }

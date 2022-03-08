@@ -84,8 +84,8 @@ func (cl *Client) RecieveMessages() {
 			break
 		}
 		// log message received
-		fmt.Println("client message received:")
-		ConsoleLogJsonByteArray(message)
+		// fmt.Println("client message received:")
+		// ConsoleLogJsonByteArray(message)
 		// route message to handler
 		messageTypeToHandler := map[string]func([]byte){
 			"MESSAGE_TYPE_GAME_STATE":        cl.HandleGameStateMessage,

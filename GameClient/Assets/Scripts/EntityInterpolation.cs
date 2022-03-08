@@ -7,7 +7,7 @@ public class EntityInterpolation : MonoBehaviour
 
     private Vector3 velocity = Vector3.zero;
 
-    public void InterpolatePosition(Vector3 newPosition)
+    public void InterpolateToPosition(Vector3 newPosition)
     {
         if(this.transform.position != newPosition)
         {
