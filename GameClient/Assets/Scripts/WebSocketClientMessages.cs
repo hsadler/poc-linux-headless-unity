@@ -8,6 +8,19 @@ public class BaseClientMessage
     public string messageType;
 }
 
+[Serializable]
+public class GameStateMessage : BaseClientMessage
+{
+    public GameStateSerializer gameState;
+    public GameStateMessage(string clientId, string messageType, GameStateSerializer gameState)
+    {
+        this.clientId = clientId;
+        this.messageType = messageType;
+        this.gameState = gameState;
+    }
+}
+
+
 //[Serializable]
 //public class ClientMessageCentralClientConnect : BaseClientMessage
 //{

@@ -7,9 +7,9 @@ TODOs:
     X run central client mode with env var
     X player client's ball's position should be updated by the server message
     X connect with multiple player clients to see bouncing ball
-    - client->server connect/disconnect
-    - central-client game ball creation upon server connect
-    - send entire game state from central-client
+    X client->server connect/disconnect
+    X central-client game ball creation upon spin-up
+    X send entire game state from central-client
     - client message routing
     - add server message routing
     - replicate game state out to connected player-clients

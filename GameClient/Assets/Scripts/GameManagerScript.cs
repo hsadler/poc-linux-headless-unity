@@ -19,10 +19,8 @@ public class GameManagerScript : MonoBehaviour
     private GameObject gameBall;
     private Vector3 newGameBallPosition = Vector3.zero;
 
-    private IDictionary<string, BaseGameEntity> uuidToGameEntity;
-    private IDictionary<string, GameObject> uuidToGO;
-    //private GameObject mainPlayer;
-    //private Vector3 newMainPlayerPosition;
+    private IDictionary<string, GameObject> idToGameBallGO = new Dictionary<string, GameObject>();
+    private IDictionary<string, GameObject> idToPlayerGO = new Dictionary<string, GameObject>();
 
     private Vector3 playerStartPos = new Vector3(-3, 0, 0);
 
@@ -31,7 +29,8 @@ public class GameManagerScript : MonoBehaviour
     void Awake()
     {
         this.clientId = Functions.GenUUID();
-        this.isCentralClient = Environment.GetEnvironmentVariable("CENTRAL_GAME_CLIENT") == "1";
+        //this.isCentralClient = Environment.GetEnvironmentVariable("CENTRAL_GAME_CLIENT") == "1";
+        this.isCentralClient = true;
         if (this.isCentralClient)
         {
             Application.targetFrameRate = (int)(1F / Time.fixedDeltaTime);
@@ -63,12 +62,33 @@ public class GameManagerScript : MonoBehaviour
     {
         if (this.isCentralClient)
         {
-            // TODO: REFACTOR TO USE SERIALIZED MESSAGE
-            //this.serverConn.SendClientMessageToServer(this.gameBall.transform.position.ToString());
+            // send entire game state to server
+            var gameStateSerializer = new GameStateSerializer();
+            foreach(KeyValuePair<string, GameObject> entry in this.idToGameBallGO)
+            {
+                var pos = new PositionSerializer(entry.Value.transform.position.x, entry.Value.transform.position.y);
+                var gb = new GameBallSerializer(
+                    uuid: entry.Key,
+                    position: pos
+                );
+                gameStateSerializer.gameBalls.Add(gb);
+            }
+            foreach (KeyValuePair<string, GameObject> entry in this.idToPlayerGO)
+            {
+                var pos = new PositionSerializer(entry.Value.transform.position.x, entry.Value.transform.position.y);
+                var player = new PlayerSerializer(
+                    uuid: entry.Key,
+                    position: pos,
+                    "test name"
+                );
+                gameStateSerializer.players.Add(player);
+            }
+            var message = new GameStateMessage(this.clientId, Constants.MESSAGE_TYPE_GAME_STATE, gameStateSerializer);
+            this.serverConn.SendClientMessageToServer(JsonUtility.ToJson(message));
         }
         else
         {
-            // interpolate all entity positions displays from server
+            // TODO: interpolate all entity positions displays from server
             //this.gameBall.GetComponent<EntityInterpolation>().InterpolatePosition(this.newGameBallPosition);
         }
     }
@@ -86,6 +106,7 @@ public class GameManagerScript : MonoBehaviour
     {
         this.gameBall = GameObject.Instantiate(this.gameBallPrefab, Vector3.zero, Quaternion.identity);
         this.gameBall.GetComponent<Rigidbody2D>().gravityScale = 1;
+        this.idToGameBallGO.Add(Functions.GenUUID(), this.gameBall);
     }   
 
     private void HandleServerMessage(string serverMessage)

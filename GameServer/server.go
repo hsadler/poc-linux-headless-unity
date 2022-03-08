@@ -70,8 +70,6 @@ type Client struct {
 }
 
 func (cl *Client) RecieveMessages() {
-	// initialize client's game state by sending server's entire state
-	cl.SendGameState()
 	// do player removal from game state and websocket close on disconnect
 	defer func() {
 		fmt.Println("Client.RecieveMessages() goroutine stopping")
@@ -90,10 +88,7 @@ func (cl *Client) RecieveMessages() {
 		ConsoleLogJsonByteArray(message)
 		// route message to handler
 		messageTypeToHandler := map[string]func([]byte){
-			// "CLIENT_MESSAGE_TYPE_PLAYER_ENTER":  cl.HandlePlayerEnter,
-			// "CLIENT_MESSAGE_TYPE_PLAYER_UPDATE": cl.HandlePlayerUpdate,
-			// "CLIENT_MESSAGE_TYPE_PLAYER_EXIT":   cl.HandlePlayerExit,
-			// "MESSAGE_TYPE_PLAYER_CLIENT_CONNECT":    cl.HandlePlayerClientConnect,
+			"MESSAGE_TYPE_GAME_STATE":        cl.HandleGameStateMessage,
 			"MESSAGE_TYPE_CLIENT_DISCONNECT": cl.HandleClientDisconnect,
 		}
 		var mData map[string]interface{}
@@ -118,56 +113,8 @@ func (cl *Client) HandleClientDisconnect(m []byte) {
 	cl.Hub.RemoveClient <- cl
 }
 
-// EXAMPLES OF PRIOR HANDLERS
-
-// func (cl *Client) HandlePlayerEnter(mData map[string]interface{}) {
-// 	player := NewPlayerFromMap(mData["player"].(map[string]interface{}), cl.Ws)
-// 	cl.Player = player
-// 	message := PlayerMessage{
-// 		MessageType: "SERVER_MESSAGE_TYPE_PLAYER_ENTER",
-// 		Player:      player,
-// 	}
-// 	serialized, _ := json.Marshal(message)
-// 	cl.Hub.Broadcast <- serialized
-// }
-
-// func (cl *Client) HandlePlayerUpdate(mData map[string]interface{}) {
-// 	player := NewPlayerFromMap(mData["player"].(map[string]interface{}), cl.Ws)
-// 	cl.Player = player
-// 	message := PlayerMessage{
-// 		MessageType: "SERVER_MESSAGE_TYPE_PLAYER_UPDATE",
-// 		Player:      player,
-// 	}
-// 	serialized, _ := json.Marshal(message)
-// 	cl.Hub.Broadcast <- serialized
-// }
-
-// func (cl *Client) HandlePlayerExit(mData map[string]interface{}) {
-// 	message := PlayerMessage{
-// 		MessageType: "SERVER_MESSAGE_TYPE_PLAYER_EXIT",
-// 		Player:      cl.Player,
-// 	}
-// 	serialized, _ := json.Marshal(message)
-// 	cl.Hub.Broadcast <- serialized
-// 	cl.Hub.Remove <- cl
-// }
-
-func (cl *Client) SendGameState() {
-	allPlayers := make([]*Player, 0)
-	// TODO: refactor for new player registry structure when it's ready
-	// for client := range cl.Hub.PlayerClients {
-	// 	if client.Player != nil {
-	// 		allPlayers = append(allPlayers, client.Player)
-	// 	}
-	// }
-	messageData := GameStateMessage{
-		MessageType: "SERVER_MESSAGE_TYPE_GAME_STATE",
-		GameState: &GameStateJsonSerializable{
-			Players: allPlayers,
-		},
-	}
-	serialized, _ := json.Marshal(messageData)
-	cl.Send <- serialized
+func (cl *Client) HandleGameStateMessage(m []byte) {
+	cl.Hub.PlayerClientBroadcast <- m
 }
 
 func (cl *Client) Cleanup() {
