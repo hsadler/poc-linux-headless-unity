@@ -73,6 +73,11 @@ public class GameManagerScript : MonoBehaviour
         }
     }
 
+    void OnDestroy()
+    {
+        this.serverConn.CloseConnection();
+    }
+
     // INTERFACE METHODS
 
     // IMPLEMENTATION METHODS

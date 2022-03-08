@@ -29,6 +29,11 @@ public class ServerConn
         this.serverMessageHandlerDelegate = d;
     }
 
+    public void CloseConnection()
+    {
+        this.ws.Close(CloseStatusCode.Normal);
+    }
+
     // WEBSOCKET HELPERS
 
     private void InitWebSocketClient(string gameServerUrl)
