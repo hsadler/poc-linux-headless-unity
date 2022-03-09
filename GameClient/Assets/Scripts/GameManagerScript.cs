@@ -24,6 +24,8 @@ public class GameManagerScript : MonoBehaviour
 
     private Vector3 playerStartPos = new Vector3(-3, 0, 0);
 
+    private GameStateMessage latestGameStateMessage;
+
     // UNITY HOOKS
 
     void Awake()
@@ -54,7 +56,7 @@ public class GameManagerScript : MonoBehaviour
     {
         if(this.isCentralClient)
         {
-            this.CentralClientCreateGameBall();
+            InvokeRepeating("CentralClientCreateGameBall", 0, 1);
         }
     }
 
@@ -88,8 +90,7 @@ public class GameManagerScript : MonoBehaviour
         }
         else
         {
-            // TODO: interpolate all entity positions displays from server
-            //this.gameBall.GetComponent<EntityInterpolation>().InterpolatePosition(this.newGameBallPosition);
+            this.PlayerClientHandleGameStateMessage();
         }
     }
 
@@ -104,10 +105,32 @@ public class GameManagerScript : MonoBehaviour
 
     private void CentralClientCreateGameBall()
     {
-        this.gameBall = GameObject.Instantiate(this.gameBallPrefab, Vector3.zero, Quaternion.identity);
+        var gameBallPos = new Vector3(-5, 0, 0);
+        this.gameBall = GameObject.Instantiate(this.gameBallPrefab, gameBallPos, Quaternion.identity);
         this.gameBall.GetComponent<Rigidbody2D>().gravityScale = 1;
         this.idToGameBallGO.Add(Functions.GenUUID(), this.gameBall);
-    }   
+    }
+
+    private void PlayerClientHandleGameStateMessage() {
+        if (this.latestGameStateMessage == null)
+        {
+            return;
+        }
+        foreach (var gameBall in this.latestGameStateMessage.gameState.gameBalls)
+        {
+            var pos = new Vector3(gameBall.position.x, gameBall.position.y, 0);
+            if (this.idToGameBallGO.ContainsKey(gameBall.uuid))
+            {
+                var gameBallGO = this.idToGameBallGO[gameBall.uuid];
+                gameBallGO.GetComponent<EntityInterpolation>().InterpolateToPosition(pos);
+            }
+            else
+            {
+                var gameBallGO = GameObject.Instantiate(this.gameBallPrefab, pos, Quaternion.identity);
+                this.idToGameBallGO.Add(gameBall.uuid, gameBallGO);
+            }
+        }
+    }
 
     private void HandleServerMessage(string serverMessage)
     {
@@ -120,7 +143,7 @@ public class GameManagerScript : MonoBehaviour
             //    this.HandlePlayerInputServerMessage(serverMessage);
             //    break;
             case Constants.MESSAGE_TYPE_GAME_STATE:
-                this.HandleGameStateMessage(serverMessage);
+                this.latestGameStateMessage = JsonUtility.FromJson<GameStateMessage>(serverMessage);
                 break;
             default:
                 Debug.LogWarning("Server message not processed: " + serverMessage);
@@ -142,25 +165,6 @@ public class GameManagerScript : MonoBehaviour
         //    new PlayerEntity(uuid, startPos, true, "new player")
         //));
         //this.serverConn.SendClientMessageToServer(m);
-    }
-
-    private void HandleGameStateMessage(string serverMessage)
-    {
-        var gameStateMessage = JsonUtility.FromJson<GameStateMessage>(serverMessage);
-        foreach(var gameBall in gameStateMessage.gameState.gameBalls)
-        {
-            var pos = new Vector3(gameBall.position.x, gameBall.position.y, 0);
-            if(this.idToGameBallGO.ContainsKey(gameBall.uuid))
-            {
-                var gameBallGO = this.idToGameBallGO[gameBall.uuid];
-                gameBallGO.GetComponent<EntityInterpolation>().InterpolateToPosition(pos);
-            }
-            else
-            {
-                var gameBallGO = GameObject.Instantiate(this.gameBallPrefab, pos, Quaternion.identity);
-                this.idToGameBallGO.Add(gameBall.uuid, gameBallGO);
-            }
-        }
     }
 
 }

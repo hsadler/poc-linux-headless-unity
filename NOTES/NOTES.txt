@@ -10,9 +10,7 @@ TODOs:
     X client->server connect/disconnect
     X central-client game ball creation upon spin-up
     X send entire game state from central-client
-    - client message routing
-    - add server message routing
-    - replicate game state out to connected player-clients
+    X replicate game state out to connected player-clients
     - send player input from player-client -> central-client
     - translate player input to player object affect on central-client
     - verify game working as expected
