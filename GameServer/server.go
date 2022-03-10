@@ -88,7 +88,8 @@ func (cl *Client) RecieveMessages() {
 		// ConsoleLogJsonByteArray(message)
 		// route message to handler
 		messageTypeToHandler := map[string]func([]byte){
-			"MESSAGE_TYPE_GAME_STATE":        cl.HandleGameStateMessage,
+			"MESSAGE_TYPE_PLAYER_JOIN":       cl.RouteMessageToCentralClient,
+			"MESSAGE_TYPE_GAME_STATE":        cl.BroadcastMessageToPlayerClients,
 			"MESSAGE_TYPE_CLIENT_DISCONNECT": cl.HandleClientDisconnect,
 		}
 		var mData map[string]interface{}
@@ -109,12 +110,16 @@ func (cl *Client) SendMessages() {
 	}
 }
 
-func (cl *Client) HandleClientDisconnect(m []byte) {
-	cl.Hub.RemoveClient <- cl
+func (cl *Client) RouteMessageToCentralClient(m []byte) {
+	cl.Hub.CentralClient.Send <- m
 }
 
-func (cl *Client) HandleGameStateMessage(m []byte) {
+func (cl *Client) BroadcastMessageToPlayerClients(m []byte) {
 	cl.Hub.PlayerClientBroadcast <- m
+}
+
+func (cl *Client) HandleClientDisconnect(m []byte) {
+	cl.Hub.RemoveClient <- cl
 }
 
 func (cl *Client) Cleanup() {
