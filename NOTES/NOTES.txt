@@ -11,8 +11,16 @@ TODOs:
     X central-client game ball creation upon spin-up
     X send entire game state from central-client
     X replicate game state out to connected player-clients
-    - player entity creation on central-client when player-client connects
-    - assign clientId ownership to players entities
+    X player entity creation on central-client when player-client connects
+    X assign clientId ownership to players entities
+    - implement entity removal on player clients when entity no longer is 
+        present on game state
     - send player input from player-client -> central-client
     - translate player input to player object affect on central-client
     - verify game working as expected
+
+BUGS:
+    - TODO: add some
+
+CLEANUP:
+    - separate central-client and player-client game managers
