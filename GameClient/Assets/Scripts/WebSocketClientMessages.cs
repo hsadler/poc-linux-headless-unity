@@ -9,6 +9,18 @@ public class BaseClientMessage
 }
 
 [Serializable]
+public class GameStateMessage : BaseClientMessage
+{
+    public GameStateSerializer gameState;
+    public GameStateMessage(string clientId, GameStateSerializer gameState)
+    {
+        this.messageType = Constants.MESSAGE_TYPE_GAME_STATE;
+        this.clientId = clientId;
+        this.gameState = gameState;
+    }
+}
+
+[Serializable]
 public class PlayerJoinMessage : BaseClientMessage
 {
     public PlayerJoinMessage(string clientId)
@@ -19,13 +31,11 @@ public class PlayerJoinMessage : BaseClientMessage
 }
 
 [Serializable]
-public class GameStateMessage : BaseClientMessage
+public class PlayerLeaveMessage : BaseClientMessage
 {
-    public GameStateSerializer gameState;
-    public GameStateMessage(string clientId, GameStateSerializer gameState)
+    public PlayerLeaveMessage(string clientId)
     {
-        this.messageType = Constants.MESSAGE_TYPE_GAME_STATE;
+        this.messageType = Constants.MESSAGE_TYPE_PLAYER_LEAVE;
         this.clientId = clientId;
-        this.gameState = gameState;
     }
 }

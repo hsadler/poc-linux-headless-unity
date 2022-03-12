@@ -84,6 +84,8 @@ public class GameManagerScript : MonoBehaviour
 
     void OnDestroy()
     {
+        var playerLeaveMessage = new PlayerLeaveMessage(this.clientId);
+        this.serverConn.SendClientMessageToServer(JsonUtility.ToJson(playerLeaveMessage));
         this.serverConn.CloseConnection();
     }
 
@@ -228,6 +230,9 @@ public class GameManagerScript : MonoBehaviour
                 case Constants.MESSAGE_TYPE_PLAYER_JOIN:
                     this.HandlePlayerJoinMessage(serverMessage);
                     break;
+                case Constants.MESSAGE_TYPE_PLAYER_LEAVE:
+                    this.HandlePlayerLeaveMessage(serverMessage);
+                    break;
                 case Constants.MESSAGE_TYPE_PLAYER_INPUT:
                     this.HandlePlayerInputMessage(serverMessage);
                     break;
@@ -259,6 +264,28 @@ public class GameManagerScript : MonoBehaviour
         playerGO.GetComponent<PlayerScript>().ownerClientId = playerJoinMessage.clientId;
         playerGO.GetComponent<Rigidbody2D>().gravityScale = 0.01f;
         this.idToPlayerGO.Add(Functions.GenUUID(), playerGO);
+    }
+
+    private void HandlePlayerLeaveMessage(string serverMessage)
+    {
+        var playerLeaveMessage = JsonUtility.FromJson<PlayerLeaveMessage>(serverMessage);
+        GameObject playerGOToDelete = null;
+        string playerUUIDToDelete = null;
+        foreach (KeyValuePair<string, GameObject> entry in this.idToPlayerGO)
+        {
+            string playerUUID = entry.Key;
+            GameObject playerGO = entry.Value;
+            if (playerGO.GetComponent<PlayerScript>().ownerClientId == playerLeaveMessage.clientId)
+            {
+                playerGOToDelete = playerGO;
+                playerUUIDToDelete = playerUUID;
+            }
+        }
+        if (playerGOToDelete != null && playerUUIDToDelete != null)
+        {
+            GameObject.Destroy(playerGOToDelete);
+            this.idToPlayerGO.Remove(playerUUIDToDelete);
+        }
     }
 
     private void HandlePlayerInputMessage(string serverMessage)

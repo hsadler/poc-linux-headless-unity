@@ -13,7 +13,7 @@ TODOs:
     X replicate game state out to connected player-clients
     X player entity creation on central-client when player-client connects
     X assign clientId ownership to players entities
-    - implement entity removal on player clients when entity no longer is 
+    X implement entity removal on player clients when entity no longer is 
         present on game state
     - send player input from player-client -> central-client
     - translate player input to player object affect on central-client
