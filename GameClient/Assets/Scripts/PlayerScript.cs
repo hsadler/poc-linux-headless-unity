@@ -4,15 +4,20 @@ using UnityEngine;
 
 public class PlayerScript : MonoBehaviour
 {
-    // Start is called before the first frame update
+
+    public string ownerClientId;
+    public bool isMainPlayer = false;
+
+    public GameObject mainPlayerIndicator;
+
     void Start()
     {
         
     }
-
-    // Update is called once per frame
+    
     void Update()
     {
-        
+
     }
+
 }

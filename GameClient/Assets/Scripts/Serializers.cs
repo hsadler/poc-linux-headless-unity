@@ -27,11 +27,13 @@ public class PlayerSerializer : BaseGameEntitySerializer
 {
 
     public string name;
+    public string ownerClientId;
 
-    public PlayerSerializer(string uuid, PositionSerializer position, string name)
+    public PlayerSerializer(string uuid, PositionSerializer position, string ownerClientId, string name)
     {
         this.uuid = uuid;
         this.position = position;
+        this.ownerClientId = ownerClientId;
         this.name = name;
     }
 }

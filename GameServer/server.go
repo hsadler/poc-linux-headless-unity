@@ -175,7 +175,7 @@ func SendJsonMessage(ws *websocket.Conn, messageJson []byte) {
 	ws.WriteMessage(1, messageJson)
 	// log that message was sent
 	// fmt.Println("server message sent:")
-	ConsoleLogJsonByteArray(messageJson)
+	// ConsoleLogJsonByteArray(messageJson)
 }
 
 type PlayerMessage struct {
