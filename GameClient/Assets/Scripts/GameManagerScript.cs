@@ -77,6 +77,10 @@ public class GameManagerScript : MonoBehaviour
             var message = new GameStateMessage(this.clientId, gameStateSerializer);
             this.serverConn.SendClientMessageToServer(JsonUtility.ToJson(message));
         }
+        else
+        {
+            this.CheckAndSendPlayerInput();
+        }
         this.ProcessServerMessagesFromQueue();
     }
 
@@ -88,6 +92,18 @@ public class GameManagerScript : MonoBehaviour
     }
 
     // INTERFACE METHODS
+
+    public GameObject GetPlayerGOByClientId(string clientId)
+    {
+        foreach (KeyValuePair<string, GameObject> entry in this.idToPlayerGO)
+        {
+            if (entry.Value.GetComponent<PlayerScript>().ownerClientId == clientId)
+            {
+                return entry.Value;
+            }
+        }
+        return null;
+    }
 
     public bool DestroyPlayerById(string uuid)
     {
@@ -165,6 +181,38 @@ public class GameManagerScript : MonoBehaviour
         }
     }
 
+    private void CheckAndSendPlayerInput()
+    {
+        string keyDown = null;
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            keyDown = KeyCode.A.ToString();
+        }
+        else if (Input.GetKeyDown(KeyCode.D))
+        {
+            keyDown = KeyCode.D.ToString();
+        }
+        if (keyDown != null)
+        {
+            var playerInputMessage = new PlayerInputMessage(this.clientId, keyDown, Constants.KEY_INTERACTION_TYPE_DOWN);
+            this.serverConn.SendClientMessageToServer(JsonUtility.ToJson(playerInputMessage));
+        }
+        string keyUp = null;
+        if (Input.GetKeyUp(KeyCode.A))
+        {
+            keyUp = KeyCode.A.ToString();
+        }
+        else if (Input.GetKeyUp(KeyCode.D))
+        {
+            keyUp = KeyCode.D.ToString();
+        }
+        if (keyUp != null)
+        {
+            var playerInputMessage = new PlayerInputMessage(this.clientId, keyUp, Constants.KEY_INTERACTION_TYPE_UP);
+            this.serverConn.SendClientMessageToServer(JsonUtility.ToJson(playerInputMessage));
+        }
+    }
+
     private void RouteServerMessage(string serverMessage)
     {
         // parse message type
@@ -210,7 +258,7 @@ public class GameManagerScript : MonoBehaviour
         var playerJoinMessage = JsonUtility.FromJson<PlayerJoinMessage>(serverMessage);
         var playerGO = GameObject.Instantiate(this.playerPrefab, this.playerStartPos, Quaternion.identity);
         playerGO.GetComponent<PlayerScript>().ownerClientId = playerJoinMessage.clientId;
-        playerGO.GetComponent<Rigidbody2D>().gravityScale = 0.01F;
+        playerGO.GetComponent<Rigidbody2D>().gravityScale = 1F;
         this.idToPlayerGO.Add(Functions.GenUUID(), playerGO);
     }
 
@@ -238,7 +286,20 @@ public class GameManagerScript : MonoBehaviour
 
     private void HandlePlayerInputMessage(string serverMessage)
     {
-        // STUB
+        var playerInputMessage = JsonUtility.FromJson<PlayerInputMessage>(serverMessage);
+        var playerGO = this.GetPlayerGOByClientId(playerInputMessage.clientId);
+        Vector3 direction = Vector3.zero;
+        if (playerInputMessage.key == KeyCode.A.ToString())
+        {
+            direction = Vector3.left;
+        } else if (playerInputMessage.key == KeyCode.D.ToString())
+        {
+            direction = Vector3.right;
+        }
+        if(direction != Vector3.zero)
+        {
+            playerGO.GetComponent<Rigidbody2D>().AddForce(direction * 1000);
+        }
     }
 
     // is player-client message handlers

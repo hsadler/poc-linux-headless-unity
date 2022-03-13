@@ -44,14 +44,14 @@ public class PlayerLeaveMessage : BaseMessage
 [Serializable]
 public class PlayerInputMessage : BaseMessage
 {
-    public KeyCode keyCode;
+    public string key;
     // "DOWN" | "UP"
     public string keyInteractionType;
-    public PlayerInputMessage(string clientId, KeyCode keyCode, string keyInteractionType)
+    public PlayerInputMessage(string clientId, string key, string keyInteractionType)
     {
         this.messageType = Constants.MESSAGE_TYPE_PLAYER_INPUT;
         this.clientId = clientId;
-        this.keyCode = keyCode;
+        this.key = key;
         this.keyInteractionType = keyInteractionType;
     }
 }

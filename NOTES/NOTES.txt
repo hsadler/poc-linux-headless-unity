@@ -15,12 +15,10 @@ TODOs:
     X assign clientId ownership to players entities
     X implement entity removal on player clients when entity no longer is 
         present on game state
-    - send player input from player-client -> central-client
-    - translate player input to player object affect on central-client
-    - verify game working as expected
-
-BUGS:
-    - TODO: add some
+    X send player input from player-client -> central-client
+    X translate player input to player object affect on central-client
+    X verify game working as expected
 
 CLEANUP:
+    - outline architecture
     - separate central-client and player-client game managers
