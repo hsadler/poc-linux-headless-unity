@@ -13,6 +13,8 @@ public class GameManagerScript : MonoBehaviour
     [NonSerialized]
     public ServerConn serverConn;
 
+    private Queue<string> serverMessageQueue = new Queue<string>();
+
     public GameObject gameBallPrefab;
     public GameObject playerPrefab;
 
@@ -21,8 +23,6 @@ public class GameManagerScript : MonoBehaviour
 
     private Vector3 gameBallStartPos = new Vector3(-5, 0, 0);
     private Vector3 playerStartPos = new Vector3(0, 3, 0);
-
-    private GameStateMessage latestGameStateMessage;
 
     // static reference to the singleton instance
     public static GameManagerScript instance { get; private set; }
@@ -48,14 +48,16 @@ public class GameManagerScript : MonoBehaviour
         }
         // connect to server
         this.serverConn = new ServerConn(Constants.GAME_SERVER_URL, this.isCentralClient);
-        this.serverConn.RegisterServerMessageHandler(this.RouteServerMessage);
+        // register server message handling
+        this.serverConn.RegisterServerMessageHandler((string serverMessage) => {
+            this.serverMessageQueue.Enqueue(serverMessage);
+        });
         // signal that player has joined
         if (!this.isCentralClient)
         {
-            var message = new PlayerJoinMessage(this.clientId);
-            this.serverConn.SendClientMessageToServer(JsonUtility.ToJson(message));
+            var playerJoinMessage = new PlayerJoinMessage(this.clientId);
+            this.serverConn.SendClientMessageToServer(JsonUtility.ToJson(playerJoinMessage));
         }
-        
     }
 
     void Start()
@@ -75,11 +77,7 @@ public class GameManagerScript : MonoBehaviour
             var message = new GameStateMessage(this.clientId, gameStateSerializer);
             this.serverConn.SendClientMessageToServer(JsonUtility.ToJson(message));
         }
-        else
-        {
-
-            this.PlayerClientHandleLatestGameStateMessage();
-        }
+        this.ProcessServerMessagesFromQueue();
     }
 
     void OnDestroy()
@@ -90,6 +88,20 @@ public class GameManagerScript : MonoBehaviour
     }
 
     // INTERFACE METHODS
+
+    public bool DestroyPlayerById(string uuid)
+    {
+        if (this.idToPlayerGO.ContainsKey(uuid))
+        {
+            GameObject.Destroy(this.idToPlayerGO[uuid]);
+            this.idToPlayerGO.Remove(uuid);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
     public bool DestroyGameBallById(string uuid)
     {
@@ -144,77 +156,13 @@ public class GameManagerScript : MonoBehaviour
         this.idToGameBallGO.Add(entityUUID, gameBall);
     }
 
-    private void PlayerClientHandleLatestGameStateMessage() {
-        if (this.latestGameStateMessage == null)
+    private void ProcessServerMessagesFromQueue()
+    {
+        while(this.serverMessageQueue.Count > 0)
         {
-            return;
+            string serverMessage = this.serverMessageQueue.Dequeue();
+            this.RouteServerMessage(serverMessage);
         }
-        var entityUUIDsToDelete = new List<string>();
-        // create or update players
-        var idToPlayerSerializer = new Dictionary<string, PlayerSerializer>();
-        foreach (PlayerSerializer player in this.latestGameStateMessage.gameState.players)
-        {
-            idToPlayerSerializer.Add(player.uuid, player);
-            var pos = new Vector3(player.position.x, player.position.y, 0);
-            if (this.idToPlayerGO.ContainsKey(player.uuid))
-            {
-                var playerGO = this.idToPlayerGO[player.uuid];
-                playerGO.GetComponent<EntityInterpolation>().InterpolateToPosition(pos);
-            }
-            else
-            {
-                var playerGO = GameObject.Instantiate(this.playerPrefab, pos, Quaternion.identity);
-                var playerScript = playerGO.GetComponent<PlayerScript>();
-                playerScript.ownerClientId = player.ownerClientId;
-                if(player.ownerClientId == this.clientId)
-                {
-                    playerScript.isMainPlayer = true;
-                    playerScript.mainPlayerIndicator.SetActive(true);
-                }
-                this.idToPlayerGO.Add(player.uuid, playerGO);
-            }
-        }
-        // delete players
-        foreach(KeyValuePair<string, GameObject> entry in this.idToPlayerGO)
-        {
-            string playerUUID = entry.Key;
-            if (!idToPlayerSerializer.ContainsKey(playerUUID))
-            {
-                entityUUIDsToDelete.Add(playerUUID);
-            }
-        }
-        // create or update balls
-        var idToGameBallSerializer = new Dictionary<string, GameBallSerializer>();
-        foreach (GameBallSerializer gameBall in this.latestGameStateMessage.gameState.gameBalls)
-        {
-            idToGameBallSerializer.Add(gameBall.uuid, gameBall);
-            var pos = new Vector3(gameBall.position.x, gameBall.position.y, 0);
-            if (this.idToGameBallGO.ContainsKey(gameBall.uuid))
-            {
-                var gameBallGO = this.idToGameBallGO[gameBall.uuid];
-                gameBallGO.GetComponent<EntityInterpolation>().InterpolateToPosition(pos);
-            }
-            else
-            {
-                var gameBallGO = GameObject.Instantiate(this.gameBallPrefab, pos, Quaternion.identity);
-                this.idToGameBallGO.Add(gameBall.uuid, gameBallGO);
-            }
-        }
-        // game balls to delete
-        foreach (KeyValuePair<string, GameObject> entry in this.idToGameBallGO)
-        {
-            string gameBallUUID = entry.Key;
-            if (!idToGameBallSerializer.ContainsKey(gameBallUUID))
-            {
-                entityUUIDsToDelete.Add(gameBallUUID);
-            }
-        }
-        // delete game objects
-        foreach(string entityUUID in entityUUIDsToDelete)
-        {
-            this.DestroyGameBallById(entityUUID);
-        }
-        this.latestGameStateMessage = null;
     }
 
     private void RouteServerMessage(string serverMessage)
@@ -246,7 +194,7 @@ public class GameManagerScript : MonoBehaviour
             {
                 // if is player-client
                 case Constants.MESSAGE_TYPE_GAME_STATE:
-                    this.latestGameStateMessage = JsonUtility.FromJson<GameStateMessage>(serverMessage);
+                    this.HandleGameStateMessage(serverMessage);
                     break;
                 default:
                     Debug.LogWarning("Server message not processed: " + serverMessage);
@@ -262,35 +210,109 @@ public class GameManagerScript : MonoBehaviour
         var playerJoinMessage = JsonUtility.FromJson<PlayerJoinMessage>(serverMessage);
         var playerGO = GameObject.Instantiate(this.playerPrefab, this.playerStartPos, Quaternion.identity);
         playerGO.GetComponent<PlayerScript>().ownerClientId = playerJoinMessage.clientId;
-        playerGO.GetComponent<Rigidbody2D>().gravityScale = 0.01f;
+        playerGO.GetComponent<Rigidbody2D>().gravityScale = 0.01F;
         this.idToPlayerGO.Add(Functions.GenUUID(), playerGO);
     }
 
     private void HandlePlayerLeaveMessage(string serverMessage)
     {
         var playerLeaveMessage = JsonUtility.FromJson<PlayerLeaveMessage>(serverMessage);
-        GameObject playerGOToDelete = null;
-        string playerUUIDToDelete = null;
+        GameObject toDeletePlayerGO = null;
+        string toDeletePlayerUUID = null;
         foreach (KeyValuePair<string, GameObject> entry in this.idToPlayerGO)
         {
             string playerUUID = entry.Key;
             GameObject playerGO = entry.Value;
             if (playerGO.GetComponent<PlayerScript>().ownerClientId == playerLeaveMessage.clientId)
             {
-                playerGOToDelete = playerGO;
-                playerUUIDToDelete = playerUUID;
+                toDeletePlayerGO = playerGO;
+                toDeletePlayerUUID = playerUUID;
             }
         }
-        if (playerGOToDelete != null && playerUUIDToDelete != null)
+        if (toDeletePlayerGO != null && toDeletePlayerUUID != null)
         {
-            GameObject.Destroy(playerGOToDelete);
-            this.idToPlayerGO.Remove(playerUUIDToDelete);
+            GameObject.Destroy(toDeletePlayerGO);
+            this.idToPlayerGO.Remove(toDeletePlayerUUID);
         }
     }
 
     private void HandlePlayerInputMessage(string serverMessage)
     {
         // STUB
+    }
+
+    // is player-client message handlers
+
+    private void HandleGameStateMessage(string serverMessage)
+    {
+        var gameStateMessage = JsonUtility.FromJson<GameStateMessage>(serverMessage);
+        var entityUUIDsToDelete = new List<string>();
+        // create or update players
+        var idToPlayerSerializer = new Dictionary<string, PlayerSerializer>();
+        foreach (PlayerSerializer player in gameStateMessage.gameState.players)
+        {
+            idToPlayerSerializer.Add(player.uuid, player);
+            var pos = new Vector3(player.position.x, player.position.y, 0);
+            if (this.idToPlayerGO.ContainsKey(player.uuid))
+            {
+                var playerGO = this.idToPlayerGO[player.uuid];
+                playerGO.GetComponent<EntityInterpolation>().InterpolateToPosition(pos);
+            }
+            else
+            {
+                var playerGO = GameObject.Instantiate(this.playerPrefab, pos, Quaternion.identity);
+                var playerScript = playerGO.GetComponent<PlayerScript>();
+                playerScript.ownerClientId = player.ownerClientId;
+                if (player.ownerClientId == this.clientId)
+                {
+                    playerScript.isMainPlayer = true;
+                    playerScript.mainPlayerIndicator.SetActive(true);
+                }
+                this.idToPlayerGO.Add(player.uuid, playerGO);
+            }
+        }
+        // delete players
+        foreach (KeyValuePair<string, GameObject> entry in this.idToPlayerGO)
+        {
+            string playerUUID = entry.Key;
+            if (!idToPlayerSerializer.ContainsKey(playerUUID))
+            {
+                entityUUIDsToDelete.Add(playerUUID);
+            }
+        }
+        // create or update balls
+        var idToGameBallSerializer = new Dictionary<string, GameBallSerializer>();
+        foreach (GameBallSerializer gameBall in gameStateMessage.gameState.gameBalls)
+        {
+            idToGameBallSerializer.Add(gameBall.uuid, gameBall);
+            var pos = new Vector3(gameBall.position.x, gameBall.position.y, 0);
+            if (this.idToGameBallGO.ContainsKey(gameBall.uuid))
+            {
+                var gameBallGO = this.idToGameBallGO[gameBall.uuid];
+                gameBallGO.GetComponent<EntityInterpolation>().InterpolateToPosition(pos);
+            }
+            else
+            {
+                var gameBallGO = GameObject.Instantiate(this.gameBallPrefab, pos, Quaternion.identity);
+                this.idToGameBallGO.Add(gameBall.uuid, gameBallGO);
+            }
+        }
+        // game balls to delete
+        foreach (KeyValuePair<string, GameObject> entry in this.idToGameBallGO)
+        {
+            string gameBallUUID = entry.Key;
+            if (!idToGameBallSerializer.ContainsKey(gameBallUUID))
+            {
+                entityUUIDsToDelete.Add(gameBallUUID);
+            }
+        }
+        // delete game objects
+        foreach (string entityUUID in entityUUIDsToDelete)
+        {
+            // try to destroy all types
+            this.DestroyPlayerById(entityUUID);
+            this.DestroyGameBallById(entityUUID);
+        }
     }
 
 }

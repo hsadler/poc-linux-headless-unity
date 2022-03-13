@@ -72,7 +72,6 @@ type Client struct {
 func (cl *Client) RecieveMessages() {
 	// do player removal from game state and websocket close on disconnect
 	defer func() {
-		fmt.Println("Client.RecieveMessages() goroutine stopping")
 		cl.HandleClientDisconnect(nil)
 		cl.Ws.Close()
 	}()
@@ -103,9 +102,6 @@ func (cl *Client) RecieveMessages() {
 }
 
 func (cl *Client) SendMessages() {
-	defer func() {
-		fmt.Println("Client.SendMessages() goroutine stopping")
-	}()
 	for message := range cl.Send {
 		SendJsonMessage(cl.Ws, message)
 	}
