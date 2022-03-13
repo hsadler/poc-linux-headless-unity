@@ -168,7 +168,7 @@ public class GameManagerScript : MonoBehaviour
     private void RouteServerMessage(string serverMessage)
     {
         // parse message type
-        string messageType = JsonUtility.FromJson<ServerMessageGeneric>(serverMessage).messageType;
+        string messageType = JsonUtility.FromJson<BaseMessage>(serverMessage).messageType;
         // route message to handler based on message type
         if(this.isCentralClient)
         {

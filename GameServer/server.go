@@ -89,6 +89,7 @@ func (cl *Client) RecieveMessages() {
 		messageTypeToHandler := map[string]func([]byte){
 			"MESSAGE_TYPE_PLAYER_JOIN":       cl.RouteMessageToCentralClient,
 			"MESSAGE_TYPE_PLAYER_LEAVE":      cl.RouteMessageToCentralClient,
+			"MESSAGE_TYPE_PLAYER_INPUT":      cl.RouteMessageToCentralClient,
 			"MESSAGE_TYPE_GAME_STATE":        cl.BroadcastMessageToPlayerClients,
 			"MESSAGE_TYPE_CLIENT_DISCONNECT": cl.HandleClientDisconnect,
 		}

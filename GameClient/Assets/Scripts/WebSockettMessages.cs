@@ -1,15 +1,16 @@
 using System;
+using UnityEngine;
 
 // base client message
 [Serializable]
-public class BaseClientMessage
+public class BaseMessage
 {
     public string messageType;
     public string clientId;
 }
 
 [Serializable]
-public class GameStateMessage : BaseClientMessage
+public class GameStateMessage : BaseMessage
 {
     public GameStateSerializer gameState;
     public GameStateMessage(string clientId, GameStateSerializer gameState)
@@ -21,7 +22,7 @@ public class GameStateMessage : BaseClientMessage
 }
 
 [Serializable]
-public class PlayerJoinMessage : BaseClientMessage
+public class PlayerJoinMessage : BaseMessage
 {
     public PlayerJoinMessage(string clientId)
     {
@@ -31,11 +32,26 @@ public class PlayerJoinMessage : BaseClientMessage
 }
 
 [Serializable]
-public class PlayerLeaveMessage : BaseClientMessage
+public class PlayerLeaveMessage : BaseMessage
 {
     public PlayerLeaveMessage(string clientId)
     {
         this.messageType = Constants.MESSAGE_TYPE_PLAYER_LEAVE;
         this.clientId = clientId;
+    }
+}
+
+[Serializable]
+public class PlayerInputMessage : BaseMessage
+{
+    public KeyCode keyCode;
+    // "DOWN" | "UP"
+    public string keyInteractionType;
+    public PlayerInputMessage(string clientId, KeyCode keyCode, string keyInteractionType)
+    {
+        this.messageType = Constants.MESSAGE_TYPE_PLAYER_INPUT;
+        this.clientId = clientId;
+        this.keyCode = keyCode;
+        this.keyInteractionType = keyInteractionType;
     }
 }
