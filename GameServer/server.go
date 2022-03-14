@@ -104,7 +104,10 @@ func (cl *Client) RecieveMessages() {
 
 func (cl *Client) SendMessages() {
 	for message := range cl.Send {
-		SendJsonMessage(cl.Ws, message)
+		cl.Ws.WriteMessage(1, message)
+		// log that message was sent
+		// fmt.Println("server message sent:")
+		// ConsoleLogJsonByteArray(messageJson)
 	}
 }
 
@@ -122,72 +125,6 @@ func (cl *Client) HandleClientDisconnect(m []byte) {
 
 func (cl *Client) Cleanup() {
 	close(cl.Send)
-}
-
-///////////////// GAME ENTITIES /////////////////
-
-type Position struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-}
-
-type GameBall struct {
-	Id       string    `json:"id"`
-	Position *Position `json:"position"`
-}
-
-func NewGameBallFromMap(pData map[string]interface{}, ws *websocket.Conn) *Player {
-	posMap := pData["position"].(map[string]interface{})
-	pos := Position{
-		X: posMap["x"].(float64),
-		Y: posMap["y"].(float64),
-	}
-	player := Player{
-		Id:       pData["id"].(string),
-		Position: &pos,
-	}
-	return &player
-}
-
-type Player struct {
-	Id       string    `json:"id"`
-	Position *Position `json:"position"`
-}
-
-func NewPlayerFromMap(pData map[string]interface{}, ws *websocket.Conn) *Player {
-	posMap := pData["position"].(map[string]interface{})
-	pos := Position{
-		X: posMap["x"].(float64),
-		Y: posMap["y"].(float64),
-	}
-	player := Player{
-		Id:       pData["id"].(string),
-		Position: &pos,
-	}
-	return &player
-}
-
-///////////////// SERVER MESSAGE SENDING /////////////////
-
-func SendJsonMessage(ws *websocket.Conn, messageJson []byte) {
-	ws.WriteMessage(1, messageJson)
-	// log that message was sent
-	// fmt.Println("server message sent:")
-	// ConsoleLogJsonByteArray(messageJson)
-}
-
-type PlayerMessage struct {
-	MessageType string  `json:"messageType"`
-	Player      *Player `json:"player"`
-}
-
-type GameStateJsonSerializable struct {
-	Players []*Player `json:"players"`
-}
-
-type GameStateMessage struct {
-	MessageType string                     `json:"messageType"`
-	GameState   *GameStateJsonSerializable `json:"gameState"`
 }
 
 ///////////////// RUN SERVER /////////////////

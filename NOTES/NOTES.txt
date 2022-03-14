@@ -20,5 +20,7 @@ TODOs:
     X verify game working as expected
 
 CLEANUP:
+    - general code cleanup
     - outline architecture
     - separate central-client and player-client game managers
+
