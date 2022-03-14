@@ -4,15 +4,18 @@ using UnityEngine;
 
 public class CentralClientGameManagerScript : MonoBehaviour
 {
-    // Start is called before the first frame update
+
+    // TODO: Use this when we separate central-client logic from player-client
+    // logic
+
     void Start()
     {
         
     }
 
-    // Update is called once per frame
     void Update()
     {
         
     }
+
 }

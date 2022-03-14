@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 
 // base client message
 [Serializable]
@@ -45,7 +44,6 @@ public class PlayerLeaveMessage : BaseMessage
 public class PlayerInputMessage : BaseMessage
 {
     public string key;
-    // "DOWN" | "UP"
     public string keyInteractionType;
     public PlayerInputMessage(string clientId, string key, string keyInteractionType)
     {

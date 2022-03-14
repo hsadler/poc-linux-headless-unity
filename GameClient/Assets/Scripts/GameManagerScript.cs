@@ -136,7 +136,7 @@ public class GameManagerScript : MonoBehaviour
 
     private GameStateSerializer SerializeGameState()
     {
-        // send entire game state to server
+        // serialize and send entire game state to connected player-clients
         var gameStateSerializer = new GameStateSerializer();
         foreach (KeyValuePair<string, GameObject> entry in this.idToGameBallGO)
         {
